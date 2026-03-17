@@ -1,6 +1,6 @@
 fastapi
 uvicorn
-# google-genai
+google-genai
 pydantic
 python-dotenv
 pydantic[email] 

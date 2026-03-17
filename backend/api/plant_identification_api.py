@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException, Response, status
 from services.plant_identification import identify_plant
-from fastapi import UploadFile
+from fastapi import File, UploadFile
 from schemas.plant import PlantCreate, PlantOut, PlantUpdate
 from services.plant_service import (
     create_plant,
@@ -14,7 +14,7 @@ router = APIRouter()
 
 
 @router.post("/identify")
-async def identify(file: UploadFile):
+async def identify(file: UploadFile = File(...)):
     try:
         result = await identify_plant(file)
         return result

@@ -64,6 +64,7 @@ const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 function toApiPayload(plant) {
   return {
     name: plant.name,
+    bangla_name: plant.banglaName || null,
     water_freq: Number(plant.waterFreq),
     direct_sunlight: Boolean(plant.directSunlight),
     last_watered: plant.lastWatered || null,
@@ -75,6 +76,7 @@ function fromApiPlant(plant) {
   return {
     id: plant.id,
     name: plant.name,
+    banglaName: plant.bangla_name,
     waterFreq: Number(plant.water_freq),
     directSunlight: Boolean(plant.direct_sunlight),
     lastWatered: plant.last_watered,
@@ -98,6 +100,23 @@ async function apiRequest(path, options = {}) {
   }
 
   if (response.status === 204) return null;
+  return response.json();
+}
+
+async function identifyPlantFromImage(file) {
+  const formData = new FormData();
+  formData.append("file", file);
+
+  const response = await fetch(`${API_BASE_URL}/identify`, {
+    method: "POST",
+    body: formData,
+  });
+
+  if (!response.ok) {
+    const text = await response.text();
+    throw new Error(text || `Identify failed: ${response.status}`);
+  }
+
   return response.json();
 }
 
@@ -176,6 +195,9 @@ function PlantCard({ plant, onDelete, onOpenDetails, onWaterToday }) {
         <h3 className="mb-1 truncate font-serif text-base font-bold leading-tight text-[#e8f5e2]">
           {plant.name}
         </h3>
+        {plant.banglaName && (
+          <p className="mb-1 truncate text-xs text-[#9ecb8f]">{plant.banglaName}</p>
+        )}
 
         <div className="mt-1.5 flex items-center gap-2 text-[#8ab87a]">
           {dropIcon}
@@ -218,20 +240,64 @@ function PlantCard({ plant, onDelete, onOpenDetails, onWaterToday }) {
   );
 }
 
-function AddPlantModal({ onClose, onAdd }) {
+function AddPlantModal({ onClose, onAdd, onIdentify }) {
   const [name, setName] = useState("");
+  const [banglaName, setBanglaName] = useState("");
   const [waterFreq, setWaterFreq] = useState(7);
   const [directSunlight, setDirectSunlight] = useState(false);
   const [lastWatered, setLastWatered] = useState(getTodayDateValue());
   const [imageUrl, setImageUrl] = useState(null);
+  const [imageFile, setImageFile] = useState(null);
   const [dragOver, setDragOver] = useState(false);
+  const [isIdentifying, setIsIdentifying] = useState(false);
+  const [identifyMessage, setIdentifyMessage] = useState("");
   const fileRef = useRef();
 
   const handleFile = (file) => {
     if (!file || !file.type.startsWith("image/")) return;
+    setImageFile(file);
+    setIdentifyMessage("");
     const reader = new FileReader();
     reader.onload = (event) => setImageUrl(event.target.result);
     reader.readAsDataURL(file);
+  };
+
+  const handleIdentify = async () => {
+    if (!imageFile) {
+      setIdentifyMessage("Upload an image first, then scan.");
+      return;
+    }
+
+    try {
+      setIsIdentifying(true);
+      setIdentifyMessage("");
+      const identified = await onIdentify(imageFile);
+      if (identified?.plant_name) {
+        setName(identified.plant_name);
+        setBanglaName(identified.bangla_name || "");
+        if (identified.suggested_water_freq) {
+          setWaterFreq(Number(identified.suggested_water_freq));
+        }
+        if (typeof identified.suggested_direct_sunlight === "boolean") {
+          setDirectSunlight(identified.suggested_direct_sunlight);
+        }
+        const confidenceText =
+          typeof identified.confidence === "number"
+            ? ` (${Math.round(identified.confidence * 100)}% confidence)`
+            : "";
+        setIdentifyMessage(
+          `AI suggestion: ${identified.plant_name}${confidenceText}${
+            identified.bangla_name ? ` | Bangla: ${identified.bangla_name}` : ""
+          }`
+        );
+      } else {
+        setIdentifyMessage("Could not detect plant name. You can enter it manually.");
+      }
+    } catch (error) {
+      setIdentifyMessage(error.message || "Plant identification failed. You can enter the name manually.");
+    } finally {
+      setIsIdentifying(false);
+    }
   };
 
   const handleDrop = (event) => {
@@ -245,6 +311,7 @@ function AddPlantModal({ onClose, onAdd }) {
 
     const success = await onAdd({
       name: name.trim(),
+      banglaName: banglaName.trim() || null,
       waterFreq: Number(waterFreq),
       directSunlight,
       lastWatered,
@@ -294,6 +361,7 @@ function AddPlantModal({ onClose, onAdd }) {
                 onClick={(event) => {
                   event.stopPropagation();
                   setImageUrl(null);
+                  setImageFile(null);
                 }}
                 className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-black/50 text-xs font-bold text-white"
               >
@@ -313,11 +381,36 @@ function AddPlantModal({ onClose, onAdd }) {
             <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#7da56a]">
               Plant Name
             </label>
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <button
+                onClick={handleIdentify}
+                disabled={isIdentifying}
+                className="rounded-lg border border-[#2a3d2a] bg-[#1a2a1a] px-3 py-1.5 text-xs font-semibold text-[#8ab87a] transition-colors hover:border-[#5c9e4a] hover:text-[#b8e0a0] disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {isIdentifying ? "Scanning..." : "Scan With AI"}
+              </button>
+              <span className="text-[11px] text-[#7da56a]">or enter it manually below</span>
+            </div>
+
             <input
               type="text"
               placeholder="e.g. Monstera, Peace Lily..."
               value={name}
               onChange={(event) => setName(event.target.value)}
+              className="w-full rounded-xl border-[1.5px] border-[#2a3d2a] bg-[#1a2a1a] px-4 py-2.5 text-sm text-[#e8f5e2] outline-none transition-all duration-200 placeholder:text-[#7da56a]/70 focus:border-[#5c9e4a]"
+            />
+            {identifyMessage && <p className="mt-1.5 text-xs text-[#8ab87a]">{identifyMessage}</p>}
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#7da56a]">
+              Bangla Name
+            </label>
+            <input
+              type="text"
+              placeholder="e.g. মানিপ্ল্যান্ট"
+              value={banglaName}
+              onChange={(event) => setBanglaName(event.target.value)}
               className="w-full rounded-xl border-[1.5px] border-[#2a3d2a] bg-[#1a2a1a] px-4 py-2.5 text-sm text-[#e8f5e2] outline-none transition-all duration-200 placeholder:text-[#7da56a]/70 focus:border-[#5c9e4a]"
             />
           </div>
@@ -403,6 +496,7 @@ function AddPlantModal({ onClose, onAdd }) {
 
 function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
   const [editName, setEditName] = useState(plant?.name || "");
+  const [editBanglaName, setEditBanglaName] = useState(plant?.banglaName || "");
   const [editWaterFreq, setEditWaterFreq] = useState(plant?.waterFreq ?? 7);
   const [editDirectSunlight, setEditDirectSunlight] = useState(plant?.directSunlight ?? false);
   const [editLastWatered, setEditLastWatered] = useState(plant?.lastWatered || "");
@@ -418,6 +512,7 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
     if (!editName.trim()) return;
     onUpdatePlant(plant.id, {
       name: editName.trim(),
+      banglaName: editBanglaName.trim() || null,
       waterFreq: Number(editWaterFreq),
       directSunlight: editDirectSunlight,
       lastWatered: editLastWatered,
@@ -454,6 +549,7 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
         <div className="space-y-4 p-6">
           <div>
             <h3 className="font-serif text-2xl font-bold text-[#e8f5e2]">{plant.name}</h3>
+            {plant.banglaName && <p className="mt-1 text-sm text-[#9ecb8f]">{plant.banglaName}</p>}
             <p className="mt-1 text-sm text-[#7da56a]">Plant profile and care snapshot</p>
           </div>
 
@@ -502,6 +598,14 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
               onChange={(event) => setEditName(event.target.value)}
               className="w-full rounded-lg border border-[#2a3d2a] bg-[#192119] px-3 py-2 text-sm text-[#e8f5e2] outline-none transition-colors focus:border-[#5c9e4a]"
               placeholder="Plant name"
+            />
+
+            <input
+              type="text"
+              value={editBanglaName}
+              onChange={(event) => setEditBanglaName(event.target.value)}
+              className="w-full rounded-lg border border-[#2a3d2a] bg-[#192119] px-3 py-2 text-sm text-[#e8f5e2] outline-none transition-colors focus:border-[#5c9e4a]"
+              placeholder="Bangla name"
             />
 
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -643,6 +747,12 @@ export default function OnkurPlantManager() {
     } catch (error) {
       setPlantsError(error.message || "Failed to update plant");
     }
+  };
+
+  const handleIdentifyFromImage = async (file) => {
+    const result = await identifyPlantFromImage(file);
+    setPlantsError("");
+    return result;
   };
 
   return (
@@ -790,6 +900,9 @@ export default function OnkurPlantManager() {
 
                     <div className="min-w-0 flex-1">
                       <div className="truncate font-serif text-sm font-semibold text-[#e8f5e2]">{plant.name}</div>
+                      {plant.banglaName && (
+                        <div className="mt-0.5 truncate text-xs text-[#9ecb8f]">{plant.banglaName}</div>
+                      )}
                       <div className="mt-0.5 flex items-center gap-1 text-xs text-[#7da56a]">
                         {dropIcon}
                         {WATER_FREQ_OPTIONS.find((option) => option.value === plant.waterFreq)?.label ||
@@ -839,7 +952,13 @@ export default function OnkurPlantManager() {
         </div>
       </div>
 
-      {showModal && <AddPlantModal onClose={() => setShowModal(false)} onAdd={handleAdd} />}
+      {showModal && (
+        <AddPlantModal
+          onClose={() => setShowModal(false)}
+          onAdd={handleAdd}
+          onIdentify={handleIdentifyFromImage}
+        />
+      )}
       {selectedPlant && (
         <PlantDetailsModal
           key={selectedPlant.id}
