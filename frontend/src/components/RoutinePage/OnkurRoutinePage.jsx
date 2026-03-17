@@ -11,7 +11,7 @@ async function fetchDailyRoutine() {
   return response.json();
 }
 
-export default function OnkurRoutinePage() {
+export default function OnkurRoutinePage({ activePage = "routine", onChangePage }) {
   const [routineData, setRoutineData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -65,8 +65,38 @@ export default function OnkurRoutinePage() {
   });
 
   return (
-    <div className="min-h-screen bg-[#0f1a10] px-4 py-8 text-[#e8f5e2]">
-      <div className="mx-auto max-w-4xl space-y-6">
+    <div className="min-h-screen bg-[#0f1a10] text-[#e8f5e2]">
+      <header className="sticky top-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-6 py-4 backdrop-blur-xl">
+        <div className="justify-self-start">
+          <div>
+            <h1 className="font-serif text-xl font-bold leading-none text-[#b8e0a0]">onkur</h1>
+            <p className="text-xs text-[#7da56a]">home garden companion</p>
+          </div>
+        </div>
+
+        <div className="flex gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1">
+          <button
+            onClick={() => onChangePage?.("plants")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              activePage === "plants" ? "bg-[#5c9e4a] text-white" : "text-[#8ab87a]"
+            }`}
+          >
+            Plant Manager
+          </button>
+          <button
+            onClick={() => onChangePage?.("routine")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              activePage === "routine" ? "bg-[#5c9e4a] text-white" : "text-[#8ab87a]"
+            }`}
+          >
+            Routine
+          </button>
+        </div>
+
+        <div className="justify-self-end" />
+      </header>
+
+      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
         <div className="rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>

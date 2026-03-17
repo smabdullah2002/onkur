@@ -2,19 +2,19 @@ import requests
 import base64
 import json
 import re
+import time
 from dotenv import load_dotenv
 import os
 from fastapi import UploadFile
+from google import genai
 
 load_dotenv()
 
 API_KEY= os.getenv("PLANT_ID_API")
 API_URL = os.getenv("PLANT_ID_URL")
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-GEMINI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/models"
-GEMINI_MODELS = [
-    "gemini-2.5-flash",
-]
+GEMINI_MODEL = "gemini-2.5-flash"
+gemini_client = genai.Client(api_key=GEMINI_API_KEY) if GEMINI_API_KEY else None
 
 
 def _extract_json(text: str) -> dict:
@@ -37,7 +37,13 @@ def _to_bool(value) -> bool:
     if isinstance(value, bool):
         return value
     if isinstance(value, str):
-        return value.strip().lower() in {"true", "yes", "1", "direct", "sun"}
+        normalized = value.strip().lower()
+        if normalized in {"true", "yes", "1", "direct", "sun"}:
+            return True
+        if "direct" in normalized or "full sun" in normalized:
+            return True
+        if "shade" in normalized or "indirect" in normalized:
+            return False
     return False
 
 
@@ -48,11 +54,29 @@ def _to_freq(value) -> float:
             return 7
         return parsed
     except Exception:
+        if isinstance(value, str):
+            normalized = value.strip().lower()
+
+            day_match = re.search(r"every\s+(\d+(?:\.\d+)?)\s*day", normalized)
+            if day_match:
+                return max(1.0, float(day_match.group(1)))
+
+            if "daily" in normalized or "every day" in normalized:
+                return 1
+            if "twice a week" in normalized:
+                return 3.5
+            if "once a week" in normalized or "weekly" in normalized:
+                return 7
+            if "every 2 week" in normalized or "biweekly" in normalized:
+                return 14
+            if "month" in normalized:
+                return 30
+
         return 7
 
 
 def _enrich_with_gemini(plant_name: str) -> dict:
-    if not GEMINI_API_KEY:
+    if not GEMINI_API_KEY or gemini_client is None:
         return {
             "bangla_name": "",
             "suggested_water_freq": 7,
@@ -60,41 +84,29 @@ def _enrich_with_gemini(plant_name: str) -> dict:
         }
 
     prompt = (
-        "You are a plant expert. For this plant name, return ONLY JSON with keys: "
-        "bangla_name (string), suggested_water_freq (number in days), suggested_direct_sunlight (boolean). "
+        "You are a plant care expert for Bangladesh. Return ONLY valid JSON with exactly these keys: "
+        "bangla_name (string), suggested_water_freq (number, days between watering), "
+        "suggested_direct_sunlight (boolean where true means direct sun, false means shade/indirect). "
+        "and by bangla name I mean the common name used in Bangladesh, not a scientific name."
+        "Do not include markdown or extra text. "
         f"Plant name: {plant_name}."
     )
 
-    payload = {
-        "contents": [{"parts": [{"text": prompt}]}],
-        "generationConfig": {
-            "temperature": 0.2,
-            "maxOutputTokens": 200,
-        },
-    }
-
     parsed = {}
-    for model in GEMINI_MODELS:
+    for attempt in range(3):
         try:
-            response = requests.post(
-                f"{GEMINI_BASE_URL}/{model}:generateContent?key={GEMINI_API_KEY}",
-                json=payload,
-                timeout=30,
+            response = gemini_client.models.generate_content(
+                model=GEMINI_MODEL,
+                contents=[prompt],
             )
-            response.raise_for_status()
-            data = response.json()
-
-            candidates = data.get("candidates", [])
-            if not candidates:
-                continue
-
-            parts = candidates[0].get("content", {}).get("parts", [])
-            text = "\n".join(part.get("text", "") for part in parts if part.get("text"))
-            parsed = _extract_json(text)
+            parsed = _extract_json((response.text or "").strip())
             if parsed:
                 break
         except Exception:
-            continue
+            pass
+
+        if attempt < 2:
+            time.sleep(1.2 * (attempt + 1))
 
     return {
         "bangla_name": str(parsed.get("bangla_name") or "").strip(),
