@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 const sunIcon = (
     <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" stroke="currentColor" strokeWidth={2}>
@@ -85,10 +85,11 @@ function fromApiPlant(plant) {
     };
 }
 
-async function apiRequest(path, options = {}) {
+async function apiRequest(path, accessToken, options = {}) {
     const response = await fetch(`${API_BASE_URL}${path}`, {
         headers: {
             "Content-Type": "application/json",
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
             ...(options.headers || {}),
         },
         ...options,
@@ -103,12 +104,15 @@ async function apiRequest(path, options = {}) {
     return response.json();
 }
 
-async function identifyPlantFromImage(file) {
+async function identifyPlantFromImage(file, accessToken) {
     const formData = new FormData();
     formData.append("file", file);
 
     const response = await fetch(`${API_BASE_URL}/identify`, {
         method: "POST",
+        headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
         body: formData,
     });
 
@@ -117,6 +121,24 @@ async function identifyPlantFromImage(file) {
         throw new Error(text || `Identify failed: ${response.status}`);
     }
 
+    return response.json();
+}
+
+async function fetchWeatherWidget(lat, lon, accessToken) {
+    const query = new URLSearchParams({
+        lat: String(lat),
+        lon: String(lon),
+    });
+
+    const response = await fetch(`${API_BASE_URL}/weather/widget?${query.toString()}`, {
+        headers: {
+            ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        },
+    });
+    if (!response.ok) {
+        const text = await response.text();
+        throw new Error(text || `Weather fetch failed: ${response.status}`);
+    }
     return response.json();
 }
 
@@ -143,6 +165,76 @@ function getNextWaterDate(lastWatered, waterFreq) {
     nextDate.setDate(nextDate.getDate() + Math.ceil(Number(waterFreq) || 0));
     return nextDate;
 }
+
+function WeatherWidget({ data, loading, error, onRefresh, locationLabel }) {
+    const weather = data?.weather || {};
+    const tips = data?.care_tips || [];
+    const nextRefreshText = data?.next_refresh_at_utc
+        ? new Date(data.next_refresh_at_utc).toLocaleString()
+        : "N/A";
+
+    return (
+        <section className="mb-6 rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-4">
+            <div className="flex items-center justify-between gap-3">
+                <div>
+                    <h3 className="font-serif text-lg font-bold text-[#b8e0a0]">Weather & Care Tips</h3>
+                    <p className="mt-0.5 text-xs text-[#7da56a]">{locationLabel}</p>
+                    {!loading && !error && (
+                        <p className="mt-0.5 text-[11px] text-[#7da56a]">
+                            {data?.tips_cached ? "Using cached tips" : "Freshly generated tips"} • Next refresh: {nextRefreshText}
+                        </p>
+                    )}
+                </div>
+                <button
+                    onClick={onRefresh}
+                    className="rounded-lg border border-[#2a3d2a] bg-[#1a2a1a] px-3 py-1.5 text-xs font-semibold text-[#8ab87a] transition-colors hover:border-[#5c9e4a] hover:text-[#b8e0a0]"
+                >
+                    Refresh
+                </button>
+            </div>
+
+            {loading ? (
+                <p className="mt-3 text-sm text-[#8ab87a]">Loading weather...</p>
+            ) : error ? (
+                <p className="mt-3 text-sm text-red-200">{error}</p>
+            ) : (
+                <>
+                    <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7da56a]">Condition</p>
+                            <p className="mt-0.5 text-sm font-semibold text-[#e8f5e2]">{weather.condition || "Unknown"}</p>
+                        </div>
+                        <div className="rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7da56a]">Temperature</p>
+                            <p className="mt-0.5 text-sm font-semibold text-[#e8f5e2]">{Math.round(weather.temperature_c ?? 0)}°C</p>
+                        </div>
+                        <div className="rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7da56a]">Humidity</p>
+                            <p className="mt-0.5 text-sm font-semibold text-[#e8f5e2]">{Math.round(weather.humidity ?? 0)}%</p>
+                        </div>
+                        <div className="rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2">
+                            <p className="text-[11px] uppercase tracking-wide text-[#7da56a]">UV Index</p>
+                            <p className="mt-0.5 text-sm font-semibold text-[#e8f5e2]">{Number(weather.uv_index ?? 0).toFixed(1)}</p>
+                        </div>
+                    </div>
+
+                    <div className="mt-3 space-y-2">
+                        {tips.length > 0 ? (
+                            tips.map((tip, index) => (
+                                <div key={`${tip}-${index}`} className="rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2 text-sm text-[#d8e7d2]">
+                                    {tip}
+                                </div>
+                            ))
+                        ) : (
+                            <p className="text-sm text-[#8ab87a]">No tips available right now.</p>
+                        )}
+                    </div>
+                </>
+            )}
+        </section>
+    );
+}
+
 
 function PlantCard({ plant, onDelete, onOpenDetails, onWaterToday }) {
     const waterLabel =
@@ -672,20 +764,24 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
     );
 }
 
-export default function OnkurPlantManager({ activePage = "plants", onChangePage }) {
+export default function OnkurPlantManager({ activePage = "plants", onChangePage, accessToken = "" }) {
     const [plants, setPlants] = useState([]);
     const [isLoadingPlants, setIsLoadingPlants] = useState(true);
     const [plantsError, setPlantsError] = useState("");
     const [showModal, setShowModal] = useState(false);
     const [selectedPlant, setSelectedPlant] = useState(null);
     const [view, setView] = useState("grid");
+    const [weatherData, setWeatherData] = useState(null);
+    const [weatherLoading, setWeatherLoading] = useState(true);
+    const [weatherError, setWeatherError] = useState("");
+    const [weatherLocationLabel, setWeatherLocationLabel] = useState("Using default location");
 
     useEffect(() => {
         const loadPlants = async () => {
             try {
                 setIsLoadingPlants(true);
                 setPlantsError("");
-                const data = await apiRequest("/plants");
+                const data = await apiRequest("/plants", accessToken);
                 setPlants((data || []).map(fromApiPlant));
             } catch (error) {
                 setPlantsError(error.message || "Failed to load plants");
@@ -695,11 +791,43 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
         };
 
         loadPlants();
-    }, []);
+    }, [accessToken]);
+
+    const loadWeather = useCallback(async (lat = 23.8103, lon = 90.4125, label = "Using default location") => {
+        try {
+            setWeatherLoading(true);
+            setWeatherError("");
+            const data = await fetchWeatherWidget(lat, lon, accessToken);
+            setWeatherData(data);
+            setWeatherLocationLabel(label);
+        } catch (error) {
+            setWeatherError(error.message || "Failed to load weather widget");
+        } finally {
+            setWeatherLoading(false);
+        }
+    }, [accessToken]);
+
+    useEffect(() => {
+        if (!navigator.geolocation) {
+            loadWeather();
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            (position) => {
+                loadWeather(
+                    position.coords.latitude,
+                    position.coords.longitude,
+                    "Using your current location"
+                );
+            },
+            () => loadWeather()
+        );
+    }, [loadWeather]);
 
     const handleDelete = async (id) => {
         try {
-            await apiRequest(`/plants/${id}`, { method: "DELETE" });
+            await apiRequest(`/plants/${id}`, accessToken, { method: "DELETE" });
             setPlants((items) => items.filter((plant) => plant.id !== id));
             setSelectedPlant((current) => (current && current.id === id ? null : current));
         } catch (error) {
@@ -709,7 +837,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
 
     const handleAdd = async (plant) => {
         try {
-            const created = await apiRequest("/plants", {
+            const created = await apiRequest("/plants", accessToken, {
                 method: "POST",
                 body: JSON.stringify(toApiPayload(plant)),
             });
@@ -724,7 +852,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
 
     const handleWaterToday = async (id) => {
         try {
-            const updated = await apiRequest(`/plants/${id}/watered-today`, { method: "PATCH" });
+            const updated = await apiRequest(`/plants/${id}/watered-today`, accessToken, { method: "PATCH" });
             const normalized = fromApiPlant(updated);
             setPlants((items) => items.map((plant) => (plant.id === id ? normalized : plant)));
             setSelectedPlant((current) => (current && current.id === id ? normalized : current));
@@ -736,7 +864,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
 
     const handleUpdatePlant = async (id, updates) => {
         try {
-            const updated = await apiRequest(`/plants/${id}`, {
+            const updated = await apiRequest(`/plants/${id}`, accessToken, {
                 method: "PATCH",
                 body: JSON.stringify(toApiPayload({ ...updates })),
             });
@@ -750,7 +878,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
     };
 
     const handleIdentifyFromImage = async (file) => {
-        const result = await identifyPlantFromImage(file);
+        const result = await identifyPlantFromImage(file, accessToken);
         setPlantsError("");
         return result;
     };
@@ -784,6 +912,13 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
                                     }`}
                             >
                                 Routine
+                            </button>
+                            <button
+                                onClick={() => onChangePage?.('health')}
+                                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${activePage === 'health' ? 'bg-[#5c9e4a] text-white' : 'text-[#8ab87a]'
+                                    }`}
+                            >
+                                Health
                             </button>
                         </div>
 
@@ -830,6 +965,18 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage 
                                 {plantsError}
                             </div>
                         )}
+
+                        <WeatherWidget
+                            data={weatherData}
+                            loading={weatherLoading}
+                            error={weatherError}
+                            locationLabel={weatherLocationLabel}
+                            onRefresh={() => {
+                                const lat = weatherData?.location?.latitude ?? 23.8103;
+                                const lon = weatherData?.location?.longitude ?? 90.4125;
+                                loadWeather(lat, lon, weatherLocationLabel);
+                            }}
+                        />
 
                         <div className="mb-8 flex flex-wrap items-center gap-6 rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-4">
                             {[

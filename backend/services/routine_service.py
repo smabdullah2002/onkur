@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from google import genai
 
-from config import GEMINI_API_KEY, SUPABASE_DEV_USER_ID, supabase
+from config import GEMINI_API_KEY, supabase
 from services.plant_service import list_plants
 
 
@@ -21,11 +21,9 @@ def _next_water_date(last_watered: str | None, water_freq: float | None) -> str 
         return next_date.isoformat()
     except (ValueError, TypeError):
         return None
-
-
-def _get_plant_inputs() -> list[dict]:
+def _get_plant_inputs(user_id: str) -> list[dict]:
     """Fetch and normalize plant data."""
-    plants = list_plants()
+    plants = list_plants(user_id)
     normalized = []
 
     for item in plants:
@@ -157,20 +155,18 @@ def _save_or_update_routine(
     return response.data[0]
 
 
-def get_daily_routine() -> dict:
+def get_daily_routine(user_id: str) -> dict:
     """Get or generate daily routine for plants."""
     # Validate configuration
     if not GEMINI_API_KEY:
         raise ValueError("GEMINI_API_KEY is missing in backend/.env")
-    if not SUPABASE_DEV_USER_ID:
-        raise ValueError("SUPABASE_DEV_USER_ID is missing in backend/.env")
 
     today = date.today().isoformat()
-    plants = _get_plant_inputs()
+    plants = _get_plant_inputs(user_id)
     fingerprint = _fingerprint_plants(plants)
 
     # Check cache
-    cached = _get_cached_routine(SUPABASE_DEV_USER_ID, today)
+    cached = _get_cached_routine(user_id, today)
     if (
         cached
         and cached.get("plant_fingerprint") == fingerprint
@@ -186,7 +182,7 @@ def get_daily_routine() -> dict:
 
     # Generate and save new routine
     routine_text = _generate_routine(plants, today)
-    saved = _save_or_update_routine(SUPABASE_DEV_USER_ID, today, fingerprint, routine_text)
+    saved = _save_or_update_routine(user_id, today, fingerprint, routine_text)
 
     return {
         "date": today,

@@ -2,8 +2,12 @@ import { useEffect, useState } from "react";
 
 const API_BASE_URL = import.meta.env.VITE_API_URL || "http://127.0.0.1:8000";
 
-async function fetchDailyRoutine() {
-  const response = await fetch(`${API_BASE_URL}/routine/daily`);
+async function fetchDailyRoutine(accessToken) {
+  const response = await fetch(`${API_BASE_URL}/routine/daily`, {
+    headers: {
+      ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+    },
+  });
   if (!response.ok) {
     const text = await response.text();
     throw new Error(text || `Failed to fetch routine: ${response.status}`);
@@ -11,7 +15,7 @@ async function fetchDailyRoutine() {
   return response.json();
 }
 
-export default function OnkurRoutinePage({ activePage = "routine", onChangePage }) {
+export default function OnkurRoutinePage({ activePage = "routine", onChangePage, accessToken = "" }) {
   const [routineData, setRoutineData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -20,7 +24,7 @@ export default function OnkurRoutinePage({ activePage = "routine", onChangePage 
     try {
       setLoading(true);
       setError("");
-      const data = await fetchDailyRoutine();
+      const data = await fetchDailyRoutine(accessToken);
       setRoutineData(data);
     } catch (err) {
       setError(err.message || "Failed to load daily routine");
@@ -31,7 +35,7 @@ export default function OnkurRoutinePage({ activePage = "routine", onChangePage 
 
   useEffect(() => {
     loadRoutine();
-  }, []);
+  }, [accessToken]);
 
   const routineLines = (routineData?.routine || "").split("\n").filter(Boolean);
   const cleanedLines = routineLines.map((line) => line.trim()).filter(Boolean);
@@ -90,6 +94,14 @@ export default function OnkurRoutinePage({ activePage = "routine", onChangePage 
             }`}
           >
             Routine
+          </button>
+          <button
+            onClick={() => onChangePage?.("health")}
+            className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
+              activePage === "health" ? "bg-[#5c9e4a] text-white" : "text-[#8ab87a]"
+            }`}
+          >
+            Health
           </button>
         </div>
 
