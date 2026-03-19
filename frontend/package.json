@@ -4,9 +4,9 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "predev": "node ../scripts/sync-frontend-env.mjs",
+    "predev": "node -e \"const fs=require('node:fs');const cp=require('node:child_process');const p='../scripts/sync-frontend-env.mjs';if(fs.existsSync(p)){const r=cp.spawnSync(process.execPath,[p],{stdio:'inherit'});process.exit(r.status??1);}else{console.log('Skipping env sync: '+p+' not found.');}\"",
     "dev": "vite",
-    "prebuild": "node ../scripts/sync-frontend-env.mjs",
+    "prebuild": "node -e \"const fs=require('node:fs');const cp=require('node:child_process');const p='../scripts/sync-frontend-env.mjs';if(fs.existsSync(p)){const r=cp.spawnSync(process.execPath,[p],{stdio:'inherit'});process.exit(r.status??1);}else{console.log('Skipping env sync: '+p+' not found.');}\"",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
@@ -22,7 +22,7 @@
     "@eslint/js": "^9.39.4",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.0",
+    "@vitejs/plugin-react": "^5.2.0",
     "eslint": "^9.39.4",
     "eslint-plugin-react-hooks": "^7.0.1",
     "eslint-plugin-react-refresh": "^0.5.2",
