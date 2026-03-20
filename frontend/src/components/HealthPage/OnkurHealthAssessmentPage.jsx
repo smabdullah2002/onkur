@@ -188,13 +188,13 @@ export default function OnkurHealthAssessmentPage({ activePage = "health", onCha
 
   return (
     <div className="min-h-screen bg-[#0f1a10] text-[#e8f5e2]">
-      <header className="sticky top-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-6 py-4 backdrop-blur-xl">
-        <div className="justify-self-start">
+      <header className="sticky top-0 z-40 flex flex-col gap-3 border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-3 py-3 backdrop-blur-xl sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
           <h1 className="font-serif text-xl font-bold leading-none text-[#b8e0a0]">onkur</h1>
           <p className="text-xs text-[#7da56a]">home garden companion</p>
         </div>
 
-        <div className="flex gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1">
+        <div className="flex w-full flex-wrap justify-center gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1 sm:w-auto sm:justify-start">
           <button
             onClick={() => onChangePage?.("plants")}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
@@ -221,12 +221,12 @@ export default function OnkurHealthAssessmentPage({ activePage = "health", onCha
           </button>
         </div>
 
-        <div className="justify-self-end" />
+        <div className="hidden lg:block" />
       </header>
 
-      <main className="mx-auto max-w-4xl px-4 py-8">
+      <main className="mx-auto max-w-4xl px-3 py-6 sm:px-4 sm:py-8">
         <section className="rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-5">
-          <h2 className="font-serif text-2xl font-bold text-[#b8e0a0]">Plant Health Assessment</h2>
+          <h2 className="font-serif text-xl font-bold text-[#b8e0a0] sm:text-2xl">Plant Health Assessment</h2>
           <p className="mt-1 text-sm text-[#7da56a]">
             Upload a plant image to run disease and health analysis with Plant.id.
           </p>
@@ -234,7 +234,7 @@ export default function OnkurHealthAssessmentPage({ activePage = "health", onCha
           <div
             className={`mt-5 relative cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-200 ${
               dragOver ? "border-[#5c9e4a]" : "border-[#2a3d2a]"
-            } ${imageUrl ? "h-[220px]" : "h-[170px] bg-[#1e2e1e]"}`}
+            } ${imageUrl ? "h-[180px] sm:h-[220px]" : "h-[150px] bg-[#1e2e1e] sm:h-[170px]"}`}
             onClick={() => fileRef.current?.click()}
             onDragOver={(event) => {
               event.preventDefault();
@@ -265,7 +265,7 @@ export default function OnkurHealthAssessmentPage({ activePage = "health", onCha
             onChange={(event) => handleFile(event.target.files?.[0])}
           />
 
-          <div className="mt-4 flex flex-wrap items-center gap-3">
+          <div className="mt-4 flex flex-col items-start gap-3 sm:flex-row sm:flex-wrap sm:items-center">
             <button
               onClick={handleAssess}
               disabled={isAssessing}

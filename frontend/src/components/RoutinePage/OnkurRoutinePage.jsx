@@ -70,15 +70,15 @@ export default function OnkurRoutinePage({ activePage = "routine", onChangePage,
 
   return (
     <div className="min-h-screen bg-[#0f1a10] text-[#e8f5e2]">
-      <header className="sticky top-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-6 py-4 backdrop-blur-xl">
-        <div className="justify-self-start">
+      <header className="sticky top-0 z-40 flex flex-col gap-3 border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-3 py-3 backdrop-blur-xl sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+        <div>
           <div>
             <h1 className="font-serif text-xl font-bold leading-none text-[#b8e0a0]">onkur</h1>
             <p className="text-xs text-[#7da56a]">home garden companion</p>
           </div>
         </div>
 
-        <div className="flex gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1">
+        <div className="flex w-full flex-wrap justify-center gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1 sm:w-auto sm:justify-start">
           <button
             onClick={() => onChangePage?.("plants")}
             className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${
@@ -105,12 +105,12 @@ export default function OnkurRoutinePage({ activePage = "routine", onChangePage,
           </button>
         </div>
 
-        <div className="justify-self-end" />
+        <div className="hidden lg:block" />
       </header>
 
-      <div className="mx-auto max-w-4xl space-y-6 px-4 py-8">
+      <div className="mx-auto max-w-4xl space-y-5 px-3 py-6 sm:px-4 sm:py-8">
         <div className="rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="font-serif text-2xl font-bold text-[#b8e0a0]">Daily Routine</h2>
               <p className="mt-1 text-sm text-[#7da56a]">

@@ -420,12 +420,12 @@ function AddPlantModal({ onClose, onAdd, onIdentify }) {
             onClick={(event) => event.target === event.currentTarget && onClose()}
         >
             <div className="my-auto w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl border border-[#2a3d2a] bg-[#192119] shadow-2xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <div className="flex items-center gap-3 border-b border-[#2a3d2a] px-6 pb-4 pt-6">
+                <div className="flex items-center gap-3 border-b border-[#2a3d2a] px-4 pb-4 pt-5 sm:px-6 sm:pt-6">
                     <span className="text-[#5c9e4a]">{leafIcon}</span>
                     <h2 className="font-serif text-xl font-bold text-[#e8f5e2]">Add a new plant</h2>
                 </div>
 
-                <div className="space-y-5 p-6">
+                <div className="space-y-5 p-4 sm:p-6">
                     <div
                         className={`relative cursor-pointer overflow-hidden rounded-2xl border-2 border-dashed transition-all duration-200 ${dragOver
                             ? "border-[#5c9e4a] ring-2 ring-[#5c9e4a] ring-offset-2 ring-offset-[#192119]"
@@ -536,7 +536,7 @@ function AddPlantModal({ onClose, onAdd, onIdentify }) {
                         <label className="mb-2 block text-xs font-semibold uppercase tracking-wider text-[#7da56a]">
                             Sunlight Tolerance
                         </label>
-                        <div className="flex overflow-hidden rounded-xl border-[1.5px] border-[#2a3d2a]">
+                        <div className="flex flex-col overflow-hidden rounded-xl border-[1.5px] border-[#2a3d2a] sm:flex-row">
                             {[
                                 { label: "Direct Sunlight", value: true, icon: sunIcon },
                                 { label: "Prefers Shade", value: false, icon: shadeIcon },
@@ -567,7 +567,7 @@ function AddPlantModal({ onClose, onAdd, onIdentify }) {
                         />
                     </div>
 
-                    <div className="flex gap-3 pt-1">
+                    <div className="flex flex-col-reverse gap-3 pt-1 sm:flex-row">
                         <button
                             onClick={onClose}
                             className="flex-1 rounded-xl border-[1.5px] border-[#2a3d2a] bg-[#1a2a1a] py-2.5 text-sm font-semibold text-[#7da56a] transition-all duration-200 hover:border-[#5c9e4a]/80"
@@ -619,7 +619,7 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
             onClick={(event) => event.target === event.currentTarget && onClose()}
         >
             <div className="my-auto w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-3xl border border-[#2a3d2a] bg-[#192119] shadow-2xl [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
-                <div className="relative h-50 w-full bg-[#1e2e1e]">
+                <div className="relative h-52 w-full bg-[#1e2e1e] sm:h-56">
                     {plant.imageUrl ? (
                         <img src={plant.imageUrl} alt={plant.name} className="h-full w-full object-cover" />
                     ) : (
@@ -640,7 +640,7 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
                     </button>
                 </div>
 
-                <div className="space-y-4 p-6">
+                <div className="space-y-4 p-4 sm:p-6">
                     <div>
                         <h3 className="font-serif text-2xl font-bold text-[#e8f5e2]">{plant.name}</h3>
                         {plant.banglaName && <p className="mt-1 text-sm text-[#9ecb8f]">{plant.banglaName}</p>}
@@ -723,7 +723,7 @@ function PlantDetailsModal({ plant, onClose, onWaterToday, onUpdatePlant }) {
                             />
                         </div>
 
-                        <div className="flex overflow-hidden rounded-lg border border-[#2a3d2a]">
+                        <div className="flex flex-col overflow-hidden rounded-lg border border-[#2a3d2a] sm:flex-row">
                             <button
                                 onClick={() => setEditDirectSunlight(true)}
                                 className={`flex-1 px-3 py-2 text-xs font-semibold transition-colors ${editDirectSunlight ? "bg-[#5c9e4a] text-white" : "bg-[#192119] text-[#7da56a]"
@@ -889,8 +889,8 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                 <div className="pointer-events-none fixed inset-0 z-0 opacity-60 [background:radial-gradient(circle_at_15%_20%,rgba(138,184,122,0.08),transparent_45%),radial-gradient(circle_at_85%_0%,rgba(92,158,74,0.06),transparent_35%)]" />
 
                 <div className="relative z-10">
-                    <header className="sticky top-0 z-40 grid grid-cols-[1fr_auto_1fr] items-center border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-6 py-4 backdrop-blur-xl">
-                        <div className="flex items-center gap-3 justify-self-start">
+                    <header className="sticky top-0 z-40 flex flex-col gap-3 border-b border-[#2a3d2a] bg-[#0f1a10]/85 px-3 py-3 backdrop-blur-xl sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between">
+                        <div className="flex items-center gap-3">
                           
                             <div>
                                 <h1 className="font-serif text-xl font-bold leading-none text-[#b8e0a0]">onkur</h1>
@@ -898,7 +898,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                             </div>
                         </div>
 
-                        <div className="flex gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1">
+                        <div className="flex w-full flex-wrap justify-center gap-2 rounded-xl border border-[#2a3d2a] bg-[#1a2a1a] p-1 sm:w-auto sm:justify-start">
                             <button
                                 onClick={() => onChangePage?.('plants')}
                                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors ${activePage === 'plants' ? 'bg-[#5c9e4a] text-white' : 'text-[#8ab87a]'
@@ -922,7 +922,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                             </button>
                         </div>
 
-                        <div className="flex items-center gap-3 justify-self-end">
+                        <div className="flex w-full items-center justify-between gap-2 sm:w-auto sm:justify-end sm:gap-3">
                             <div className="flex gap-0.5 overflow-hidden rounded-xl border border-[#2a3d2a] bg-[#1e2e1e] p-0.5">
                                 {["grid", "list"].map((currentView) => (
                                     <button
@@ -951,10 +951,10 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
 
                             <button
                                 onClick={() => setShowModal(true)}
-                                className="flex items-center gap-2 rounded-xl bg-linear-to-br from-[#5c9e4a] to-[#8ab87a] px-4 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(92,158,74,0.3)] transition-all duration-200 hover:opacity-90 active:scale-95"
+                                className="flex items-center gap-2 rounded-xl bg-linear-to-br from-[#5c9e4a] to-[#8ab87a] px-3 py-2 text-sm font-semibold text-white shadow-[0_4px_15px_rgba(92,158,74,0.3)] transition-all duration-200 hover:opacity-90 active:scale-95 sm:px-4"
                             >
                                 {plusIcon}
-                                <span className="hidden sm:inline">Add Plant</span>
+                                <span className="inline sm:inline">Add Plant</span>
                             </button>
                         </div>
                     </header>
@@ -978,14 +978,14 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                             }}
                         />
 
-                        <div className="mb-8 flex flex-wrap items-center gap-6 rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-4">
+                        <div className="mb-8 grid grid-cols-2 gap-3 rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-4 sm:grid-cols-4">
                             {[
                                 { label: "Total Plants", value: plants.length, color: "#5c9e4a" },
                                 { label: "Direct Sun", value: plants.filter((plant) => plant.directSunlight).length, color: "#e8a030" },
                                 { label: "Shade Lovers", value: plants.filter((plant) => !plant.directSunlight).length, color: "#8ab87a" },
                                 { label: "Daily Waterers", value: plants.filter((plant) => plant.waterFreq <= 2).length, color: "#60a5fa" },
                             ].map((stat) => (
-                                <div key={stat.label} className="flex items-center gap-3">
+                                <div key={stat.label} className="flex items-center gap-3 rounded-xl border border-[#2a3d2a] bg-[#192119] p-3">
                                     <div className="h-8 w-2 rounded-full" style={{ background: stat.color }} />
                                     <div>
                                         <div className="font-serif text-xl font-bold leading-none" style={{ color: stat.color }}>
@@ -1042,7 +1042,7 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                                                 setSelectedPlant(plant);
                                             }
                                         }}
-                                        className="group flex items-center gap-3 rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2.5 transition-all duration-200 hover:translate-x-1 hover:border-[#5c9e4a] focus:outline-none focus:ring-2 focus:ring-[#5c9e4a] focus:ring-offset-2 focus:ring-offset-[#0f1a10]"
+                                        className="group flex flex-col items-stretch gap-3 rounded-xl border border-[#2a3d2a] bg-[#192119] px-3 py-2.5 transition-all duration-200 hover:translate-x-1 hover:border-[#5c9e4a] focus:outline-none focus:ring-2 focus:ring-[#5c9e4a] focus:ring-offset-2 focus:ring-offset-[#0f1a10] sm:flex-row sm:items-center"
                                     >
                                         <div className="h-12 w-12 shrink-0 overflow-hidden rounded-lg bg-[#1e2e1e]">
                                             {plant.imageUrl ? (
@@ -1074,31 +1074,33 @@ export default function OnkurPlantManager({ activePage = "plants", onChangePage,
                                             className={`flex shrink-0 items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold ${plant.directSunlight
                                                 ? "border-amber-300/30 bg-amber-400/15 text-amber-300"
                                                 : "border-[#2a3d2a] bg-slate-400/10 text-[#7da56a]"
-                                                }`}
+                                                } self-start sm:self-auto`}
                                         >
                                             {plant.directSunlight ? sunIcon : shadeIcon}
                                             {plant.directSunlight ? "Direct Sun" : "Shade"}
                                         </div>
 
-                                        <button
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleWaterToday(plant.id);
-                                            }}
-                                            className="rounded-lg border border-[#2a3d2a] px-2 py-1 text-xs font-semibold text-[#8ab87a] transition-colors hover:border-[#5c9e4a] hover:text-[#b8e0a0]"
-                                        >
-                                            Watered
-                                        </button>
+                                        <div className="flex items-center gap-2 sm:ml-auto">
+                                            <button
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    handleWaterToday(plant.id);
+                                                }}
+                                                className="rounded-lg border border-[#2a3d2a] px-2 py-1 text-xs font-semibold text-[#8ab87a] transition-colors hover:border-[#5c9e4a] hover:text-[#b8e0a0]"
+                                            >
+                                                Watered
+                                            </button>
 
-                                        <button
-                                            onClick={(event) => {
-                                                event.stopPropagation();
-                                                handleDelete(plant.id);
-                                            }}
-                                            className="rounded-lg p-2 text-[#7da56a] opacity-0 transition-opacity group-hover:opacity-50 hover:opacity-100!"
-                                        >
-                                            {trashIcon}
-                                        </button>
+                                            <button
+                                                onClick={(event) => {
+                                                    event.stopPropagation();
+                                                    handleDelete(plant.id);
+                                                }}
+                                                className="rounded-lg p-2 text-[#7da56a] opacity-70 transition-opacity group-hover:opacity-100"
+                                            >
+                                                {trashIcon}
+                                            </button>
+                                        </div>
                                     </div>
                                 ))}
                             </div>

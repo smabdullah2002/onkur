@@ -48,8 +48,8 @@ function AuthScreen({ onAuthSuccess }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#0f1a10] px-4 py-10 text-[#e8f5e2]">
-      <div className="mx-auto max-w-md rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-6">
+    <div className="min-h-screen bg-[#0f1a10] px-3 py-6 text-[#e8f5e2] sm:px-4 sm:py-10">
+      <div className="mx-auto max-w-md rounded-2xl border border-[#2a3d2a] bg-[#141f14] p-5 sm:p-6">
         <h1 className="font-serif text-2xl font-bold text-[#b8e0a0]">onkur</h1>
         <p className="mt-1 text-sm text-[#7da56a]">Sign in to sync your plants with Supabase.</p>
 
@@ -135,7 +135,7 @@ function App() {
         onClick={async () => {
           await supabase.auth.signOut();
         }}
-        className="fixed bottom-4 right-4 z-50 rounded-lg border border-[#2a3d2a] bg-[#1a2a1a] px-3 py-1.5 text-xs font-semibold text-[#8ab87a]"
+        className="fixed bottom-3 right-3 z-50 rounded-lg border border-[#2a3d2a] bg-[#1a2a1a] px-3 py-1.5 text-xs font-semibold text-[#8ab87a] sm:bottom-4 sm:right-4"
       >
         Sign Out
       </button>
