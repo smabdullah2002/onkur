@@ -3,6 +3,7 @@
 onkur is a personal plant-care app with a React frontend and FastAPI backend.
 It helps each signed-in user manage plants, get daily AI routines, see weather-based care tips, and run plant health checks from images.
 
+LIVE DEMO: https://onkur.netlify.app/
 ## Features
 
 - User authentication with Supabase Auth (sign up, sign in, sign out)
